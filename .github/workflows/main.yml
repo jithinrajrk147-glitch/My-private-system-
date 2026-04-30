@@ -27,16 +27,32 @@ jobs:
         run: mkdir -p www
       - name: Add permissions and boot receiver
         run: |
-          sed -i 's|</application>|<uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/><uses-permission android:name="android.permission.WAKE_LOCK"/><uses-permission android[...]
+          sed -i 's|</application>|<uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/><uses-permission android:name="android.permission.WAKE_LOCK"/></application>|g' android/app/src/main/AndroidManifest.xml
       - name: Create BootReceiver.java
         run: |
           mkdir -p android/app/src/main/java/com/anxroall/collector
-          echo 'package com.anxroall.collector; import android.content.BroadcastReceiver; import android.content.Context; import android.content.Intent; public class BootReceiver extends Broadcast[...]
+          cat > android/app/src/main/java/com/anxroall/collector/BootReceiver.java << 'EOF'
+          package com.anxroall.collector;
+          import android.content.BroadcastReceiver;
+          import android.content.Context;
+          import android.content.Intent;
+          public class BootReceiver extends BroadcastReceiver {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+              if (Intent.ACTION_BOOT_COMPLETED.equals(intent.getAction())) {
+                Intent startIntent = new Intent(context, MainActivity.class);
+                startIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                context.startActivity(startIntent);
+              }
+            }
+          }
+          EOF
       - name: Sync Capacitor
         run: npx cap sync android
       - name: Build APK
         run: cd android && chmod +x gradlew && ./gradlew assembleDebug
       - name: Upload APK
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: TG-Collector-APK
