@@ -8,6 +8,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -21,6 +23,10 @@ jobs:
         run: npm install
       - name: Add Android platform
         run: npx cap add android
+      - name: Prepare web assets
+        run: |
+          mkdir www
+          cp index.html www/
       - name: Add permissions and boot receiver
         run: |
           sed -i 's|</application>|<uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/><uses-permission android:name="android.permission.WAKE_LOCK"/><uses-permission android:name="android.permission.FOREGROUND_SERVICE"/><uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS"/><receiver android:enabled="true" android:exported="true" android:name=".BootReceiver" android:permission="android.permission.RECEIVE_BOOT_COMPLETED"><intent-filter><action android:name="android.intent.action.BOOT_COMPLETED"/><category android:name="android.intent.category.DEFAULT"/></intent-filter></receiver></application>|' android/app/src/main/AndroidManifest.xml
