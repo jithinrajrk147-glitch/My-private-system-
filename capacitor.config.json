@@ -1,0 +1,14 @@
+{
+  "appId": "com.anxroall.collector",
+  "appName": "TG Collector",
+  "webDir": "www",
+  "plugins": {
+    "CapacitorKeepAwake": {
+      "enabled": true
+    }
+  },
+  "android": {
+    "allowMixedContent": true,
+    "backgroundColor": "#0f0f0f"
+  }
+}
