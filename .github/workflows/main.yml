@@ -1,44 +1,37 @@
 name: Build Android APK
 on: [push, workflow_dispatch]
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
-          
+          node-version: 22
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '21'
-          
       - name: Install dependencies
         run: npm install
-        
       - name: Add Android platform
         run: npx cap add android
-        
       - name: Add permissions and boot receiver
         run: |
           sed -i 's|</application>|<uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/><uses-permission android:name="android.permission.WAKE_LOCK"/><uses-permission android:name="android.permission.FOREGROUND_SERVICE"/><uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS"/><receiver android:enabled="true" android:exported="true" android:name=".BootReceiver" android:permission="android.permission.RECEIVE_BOOT_COMPLETED"><intent-filter><action android:name="android.intent.action.BOOT_COMPLETED"/><category android:name="android.intent.category.DEFAULT"/></intent-filter></receiver></application>|' android/app/src/main/AndroidManifest.xml
-          
       - name: Create BootReceiver.java
         run: |
           mkdir -p android/app/src/main/java/com/anxroall/collector
           echo 'package com.anxroall.collector; import android.content.BroadcastReceiver; import android.content.Context; import android.content.Intent; public class BootReceiver extends BroadcastReceiver { @Override public void onReceive(Context context, Intent intent) { if (Intent.ACTION_BOOT_COMPLETED.equals(intent.getAction())) { Intent i = new Intent(context, MainActivity.class); i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK); context.startActivity(i); } } }' > android/app/src/main/java/com/anxroall/collector/BootReceiver.java
-          
       - name: Sync Capacitor
         run: npx cap sync android
-        
       - name: Build APK
         run: cd android && chmod +x gradlew && ./gradlew assembleDebug
-        
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
